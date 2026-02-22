@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="NSubstitute" />
+		<PackageReference Include="Refit" />
+		<PackageReference Include="FluentAssertions" />
+		<PackageReference Include="Aspire.Hosting.Testing" />
+		<PackageReference Include="coverlet.collector" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />
+		<PackageReference Include="xunit.v3" />
+		<PackageReference Include="xunit.runner.visualstudio" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\playground\MVFC.LongPolling.Playground.Api\MVFC.LongPolling.Playground.Api.csproj" />
+		<ProjectReference Include="..\..\playground\MVFC.LongPolling.Playground.AppHost\MVFC.LongPolling.Playground.AppHost.csproj" />
+	</ItemGroup>
+</Project>

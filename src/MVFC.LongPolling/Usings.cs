@@ -1,0 +1,9 @@
+﻿global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+global using Microsoft.Extensions.Options;
+global using StackExchange.Redis;
+global using MVFC.LongPolling.Config;
+global using MVFC.LongPolling.Extensions;
+global using MVFC.LongPolling.Services;
+global using System.Collections.Concurrent;
+global using System.Text.Json;
