@@ -7,3 +7,4 @@ global using MVFC.LongPolling.Extensions;
 global using MVFC.LongPolling.Services;
 global using System.Collections.Concurrent;
 global using System.Text.Json;
+global using MVFC.LongPolling.Internals;

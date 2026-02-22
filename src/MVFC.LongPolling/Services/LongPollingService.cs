@@ -11,7 +11,7 @@ public sealed class LongPollingService(
     private readonly LongPollingConfig _config = config.Value;
     private readonly ILogger<LongPollingService> _logger = logger;
 
-    private readonly ConcurrentDictionary<string, SemaphoreSlim> _channelLocks = new();
+    private readonly ConcurrentDictionary<string, ChannelLockEntry> _channelLocks = new();
     private readonly ConcurrentDictionary<string, TaskCompletionSource> _readySignals = new();
 
     public async Task<T?> WaitAsync<T>(string channel, LongPollingOptions? options = null, JsonSerializerOptions? jsonOptions = null, CancellationToken cancellationToken = default)
@@ -53,27 +53,31 @@ public sealed class LongPollingService(
         }
         finally
         {
-            channelLock.Release();
-
-            if (channelLock.CurrentCount == 1)
-                _channelLocks.TryRemove(fullChannel, out _);
+            if (channelLock.Release())
+                _channelLocks.TryRemove(new KeyValuePair<string, ChannelLockEntry>(fullChannel, channelLock));
         }
     }
 
-    private async Task<SemaphoreSlim> AcquireChannelLockAsync(string fullChannel, CancellationToken cancellationToken)
+    private async Task<ChannelLockEntry> AcquireChannelLockAsync(string fullChannel, CancellationToken cancellationToken)
     {
-        var channelLock = _channelLocks.GetOrAdd(fullChannel, _ => new SemaphoreSlim(1, 1));
+        var entry = _channelLocks.AddOrUpdate(
+            fullChannel,
+            static _ => ChannelLockEntry.CreateWithRef(),
+            static (_, existing) =>
+            {
+                existing.AddRef();
+                return existing;
+            });
 
         try
         {
-            await channelLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-            return channelLock;
+            await entry.WaitAsync(cancellationToken).ConfigureAwait(false);
+            return entry;
         }
         catch
         {
-            if (channelLock.CurrentCount == 1)
-                _channelLocks.TryRemove(fullChannel, out _);
-
+            if (entry.Release())
+                _channelLocks.TryRemove(new KeyValuePair<string, ChannelLockEntry>(fullChannel, entry));
             throw;
         }
     }
@@ -211,8 +215,8 @@ public sealed class LongPollingService(
 
         await _subscriber.UnsubscribeAllAsync().ConfigureAwait(false);
 
-        foreach (var (_, semaphore) in _channelLocks)
-            semaphore.Dispose();
+        foreach (var (_, entry) in _channelLocks)
+            entry.Dispose();
 
         _channelLocks.Clear();
         _readySignals.Clear();
@@ -225,8 +229,8 @@ public sealed class LongPollingService(
 
         _subscriber.UnsubscribeAll();
 
-        foreach (var (_, semaphore) in _channelLocks)
-            semaphore.Dispose();
+        foreach (var (_, entry) in _channelLocks)
+            entry.Dispose();
 
         _channelLocks.Clear();
         _readySignals.Clear();
