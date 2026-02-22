@@ -2,7 +2,7 @@
 
 internal sealed class ChannelLockEntry : IDisposable
 {
-    private int _refCount = 0;
+    private int _refCount;
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     public static ChannelLockEntry CreateWithRef()

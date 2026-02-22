@@ -1,6 +1,6 @@
 ﻿namespace MVFC.LongPolling.Tests;
 
-public sealed class LongPollingServiceTests
+public sealed class LongPollingServiceTests : IAsyncDisposable
 {
     private readonly IConnectionMultiplexer _redis = Substitute.For<IConnectionMultiplexer>();
     private readonly ISubscriber _subscriber = Substitute.For<ISubscriber>();    
@@ -136,4 +136,7 @@ public sealed class LongPollingServiceTests
         result!.OrderId.Should().Be(orderId);
         result!.Status.Should().Be(status);
     }
+
+    public async ValueTask DisposeAsync() =>
+        await _sut.DisposeAsync().ConfigureAwait(true);
 }

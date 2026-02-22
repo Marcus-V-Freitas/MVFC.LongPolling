@@ -13,7 +13,7 @@ public static class DefaultEndpoints
 
         app.MapGet("/poll/{jobId}/typed", async (string jobId, ILongPollingService polling, CancellationToken ct) =>
         {
-            var result = await polling.WaitAsync<OrderCompletedEvent>(jobId, cancellationToken: ct);
+            var result = await polling.WaitAsync<OrderCompletedEvent>(jobId, cancellationToken: ct).ConfigureAwait(false);
 
             return result is null
                 ? Results.NoContent()
