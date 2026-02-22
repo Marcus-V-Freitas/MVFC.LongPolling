@@ -139,6 +139,68 @@ GET /poll/{id} ──►   WaitAsync()
 GET retorna    ◄──   Results.Ok(payload)
 ```
 
+## Exemplo de Fluxo de funcionamento de cenário em produção para pagamento
+
+### Fluxo padrão — mensagem recebida
+
+```
+Cliente HTTP       API Pedidos            API Pagamentos
+────────────       ───────────            ──────────────
+POST /orders ──►  Cria pedido
+                   WaitAsync(orderId) ──► Processa pagamento
+                                          PublishAsync(orderId, "approved")
+                   ◄── "approved"
+200 OK       ◄──  Results.Ok(status)
+```
+
+### Timeout — sem resposta do pagamento
+
+```
+Cliente HTTP       API Pedidos            API Pagamentos
+────────────       ───────────            ──────────────
+POST /orders ──►  Cria pedido
+                   WaitAsync(orderId) ──► Processa pagamento
+                   (aguarda...)           (sem PublishAsync)
+                   timeout atingido
+504 GW Timeout ◄── Results.StatusCode(504)
+```
+
+### Pagamento recusado
+
+```
+Cliente HTTP       API Pedidos            API Pagamentos
+────────────       ───────────            ──────────────
+POST /orders ──►  Cria pedido
+                   WaitAsync(orderId) ──► Processa pagamento
+                                          PublishAsync(orderId, "rejected")
+                   ◄── "rejected"
+422 Unprocessable ◄── Results.UnprocessableEntity(status)
+```
+
+### Cliente desconecta antes da resposta
+
+```
+Cliente HTTP       API Pedidos            API Pagamentos
+────────────       ───────────            ──────────────
+POST /orders ──►  Cria pedido
+                   WaitAsync(orderId) ──► Processa pagamento
+✗ desconecta
+                   CancellationToken cancelado
+                   WaitAsync lança OperationCanceledException
+                   (resposta descartada)
+```
+
+### Publish sem subscriber ativo
+
+```
+Cliente HTTP       API Pedidos            API Pagamentos
+────────────       ───────────            ──────────────
+                                          PublishAsync(orderId, "approved")
+                                          delivered = false
+                   (nenhum WaitAsync ativo para orderId)
+404 Not Found  ◄── Results.NotFound(...)
+```
+
 ---
 
 ## Estrutura do Projeto

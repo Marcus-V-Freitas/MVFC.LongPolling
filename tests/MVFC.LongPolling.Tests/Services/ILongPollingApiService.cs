@@ -13,4 +13,10 @@ internal interface ILongPollingApiService
 
     [Post("/notify/{jobId}")]
     internal Task<IApiResponse> NotifyAsync(string jobId, [Body] NotifyRequest request);
+
+    [Post("/orders")]
+    internal Task<ApiResponse<OrderResponse>> CreateOrderAsync([Body] CreateOrderRequest request, CancellationToken ct = default);
+
+    [Post("/payments/process")]
+    internal Task<ApiResponse<string>> ProcessPaymentAsync([Body] ProcessPaymentRequest request, CancellationToken ct = default);
 }

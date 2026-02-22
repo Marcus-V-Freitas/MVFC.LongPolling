@@ -18,6 +18,7 @@
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
     <PackageVersion Include="Refit" Version="10.0.1" />
+    <PackageVersion Include="Refit.HttpClientFactory" Version="10.0.1" />
     <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.19.0.132793" />
   </ItemGroup>
 </Project>

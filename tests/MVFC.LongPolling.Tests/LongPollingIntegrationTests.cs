@@ -162,4 +162,77 @@ public sealed class LongPollingIntegrationTests(AspireFixture fixture) : IClassF
         // Assert
         result.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
+
+    [Fact]
+    public async Task Order_WhenPaymentApproved_Returns200WithApprovedStatus()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var payload = new CreateOrderRequest(Amount: 500m);
+
+        // Act
+        var result = await _api.CreateOrderAsync(payload, ct);
+
+        // Assert
+        result.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Content!.Status.Should().Be("approved");
+        result.Content!.OrderId.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task Order_WhenPaymentRejected_Returns422WithRejectedStatus()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var payload = new CreateOrderRequest(Amount: 99_999m);
+
+        // Act
+        var result = await _api.CreateOrderAsync(payload, ct);
+
+        // Assert
+        result.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        result.Content!.Status.Should().Be("rejected");
+    }
+
+    [Fact]
+    public async Task Order_WhenPaymentApiDoesNotRespond_Returns504()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var payload = new CreateOrderRequest(Amount: -1m);
+
+        // Act
+        var result = await _api.CreateOrderAsync(payload, ct);
+
+        // Assert
+        result.StatusCode.Should().Be(HttpStatusCode.GatewayTimeout);
+    }
+
+    [Fact]
+    public async Task Order_WhenClientDisconnects_RequestIsCancelled()
+    {
+        // Arrange
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(300));
+        var payload = new CreateOrderRequest(Amount: -1m);
+
+        // Act
+        Func<Task> act = async () => await _api.CreateOrderAsync(payload, cts.Token).ConfigureAwait(false);
+
+        // Assert
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    [Fact]
+    public async Task Payment_WhenNoSubscriberActive_Returns404()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var payload = new ProcessPaymentRequest(OrderId: Guid.NewGuid().ToString(), Amount: 500m);
+
+        // Act
+        var result = await _api.ProcessPaymentAsync(payload, ct);
+
+        // Assert
+        result.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
 }

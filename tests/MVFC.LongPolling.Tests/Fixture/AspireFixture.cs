@@ -15,7 +15,10 @@ public sealed class AspireFixture : IAsyncLifetime
         await _app.StartAsync().ConfigureAwait(false);
 
         _http = _app.CreateHttpClient("api");
-        Api = RestService.For<ILongPollingApiService>(_http);
+        Api = RestService.For<ILongPollingApiService>(_http, new RefitSettings
+        {
+            ExceptionFactory = _ => Task.FromResult<Exception?>(null)
+        });
     }
 
     public async ValueTask DisposeAsync()

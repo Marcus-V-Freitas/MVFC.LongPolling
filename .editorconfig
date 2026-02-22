@@ -1,6 +1,6 @@
 # ============================================================
 #  MVFC – .editorconfig
-#  Melhores práticas C# / .NET 2025
+#  Melhores práticas C# / .NET 2026
 #  Baseado em: Microsoft Coding Conventions, Roslyn Analyzers,
 #  SonarAnalyzer e padrões MVFC
 # ============================================================
@@ -96,7 +96,7 @@ csharp_using_directive_placement           = outside_namespace:warning
 # ---------- var ----------
 csharp_style_var_for_built_in_types  = true:warning
 csharp_style_var_when_type_is_apparent = true:warning
-csharp_style_var_elsewhere           = false:suggestion
+csharp_style_var_elsewhere           = true:warning
 
 # ---------- Expression-bodied members ----------
 csharp_style_expression_bodied_methods        = when_on_single_line:suggestion
@@ -343,7 +343,7 @@ dotnet_diagnostic.IDE0059.severity = warning
 dotnet_diagnostic.IDE0060.severity = warning
 
 # Usar descarte _ em lambdas
-dotnet_diagnostic.IDE0058.severity = suggestion
+dotnet_diagnostic.IDE0058.severity = none
 
 # Preferir throw expression
 dotnet_diagnostic.IDE0016.severity = suggestion
