@@ -18,7 +18,8 @@ Task("Restore")
     .Does(() =>
 {
     Information("Restaurando pacotes...");
-    DotNetRestore("MVFC.LongPolling.slnx");
+    var exitCode = StartProcess("dotnet", "restore MVFC.LongPolling.slnx");
+    if (exitCode != 0) throw new Exception($"dotnet restore failed with exit code {exitCode}");
 });
 
 Task("Build")
@@ -26,11 +27,8 @@ Task("Build")
     .Does(() =>
 {
     Information("Build Release...");
-    DotNetBuild("MVFC.LongPolling.slnx", new DotNetBuildSettings
-    {
-        Configuration = "Release",
-        NoRestore = true
-    });
+    var exitCode = StartProcess("dotnet", "build MVFC.LongPolling.slnx --configuration Release --no-restore");
+    if (exitCode != 0) throw new Exception($"dotnet build failed with exit code {exitCode}");
 });
 
 Task("Test-Coverage")
@@ -42,19 +40,8 @@ Task("Test-Coverage")
     var reportDir   = "./CoverageReport";
 
     Information("Executando testes com cobertura...");
-    DotNetTest(testProject, new DotNetTestSettings
-    {
-        Configuration = "Release",
-        NoBuild = true,
-        ResultsDirectory = resultsDir,
-        ArgumentCustomization = args => args
-            .Append("--collect:\"XPlat Code Coverage\"")
-            .Append("--settings coverage.runsettings")
-            .Append("--logger \"trx;LogFileName=test-results.trx\"")
-            .Append("--verbosity detailed")
-            .Append("--diag diag.txt")
-    });
-    Information("DotNetTest finalizado (se chegou aqui). Verifique test-results.trx e diag.txt");
+    var testExitCode = StartProcess("dotnet", $"test \"{testProject}\" --configuration Release --no-build --collect:\"XPlat Code Coverage\" --results-directory \"{resultsDir}\" --settings coverage.runsettings --logger \"trx;LogFileName=test-results.trx\"");
+    if (testExitCode != 0) throw new Exception($"dotnet test failed with exit code {testExitCode}");
 
     var reports = GetFiles("./coverage/**/coverage.cobertura.xml");
     if (reports == null || reports.Count == 0)
@@ -74,24 +61,11 @@ Task("Test-Coverage")
     var reportArgs = string.Join(";", reports.Select(f => f.FullPath));
     var rgPath     = FileExists(reportGeneratorExeWin) ? reportGeneratorExeWin : reportGeneratorExe;
 
-    Information("ReportGenerator path: {0}", rgPath);
-    Information("ReportGenerator args: -reports:\"{0}\" -targetdir:\"{1}\" -reporttypes:\"Html;Cobertura;MarkdownSummaryGithub\" -assemblyfilters:\"+MVFC.LongPolling*\" -classfilters:\"-*.Tests.*;-*.Playground.*\"", reportArgs, reportDir);
-
-    try
-    {
-        var exitCode = StartProcess(rgPath, $"-reports:\"{reportArgs}\" -targetdir:\"{reportDir}\" -reporttypes:\"Html;Cobertura;MarkdownSummaryGithub\" -assemblyfilters:\"+MVFC.LongPolling*\" -classfilters:\"-*.Tests.*;-*.Playground.*\"");
-        if (exitCode != 0)
-        {
-            Error("ReportGenerator retornou código de saída {0}", exitCode);
-            throw new Exception($"ReportGenerator failed with exit code {exitCode}");
-        }
-    }
-    catch(Exception ex)
-    {
-        Error("Falha ao executar ReportGenerator: {0}", ex.Message);
-        throw;
-    }
+    Information("Gerando relatório HTML...");
+    var rgExitCode = StartProcess(rgPath, $"-reports:\"{reportArgs}\" -targetdir:\"{reportDir}\" -reporttypes:\"Html;Cobertura;MarkdownSummaryGithub\" -assemblyfilters:\"+MVFC.LongPolling*\" -classfilters:\"-*.Tests.*;-*.Playground.*\"");
+    if (rgExitCode != 0) throw new Exception($"ReportGenerator failed with exit code {rgExitCode}");
     Information($"Relatório gerado em: {reportDir}");
 });
 
 RunTarget("Default");
+

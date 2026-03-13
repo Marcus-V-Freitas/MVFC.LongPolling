@@ -43,7 +43,7 @@ jobs:
       - name: Install ReportGenerator
         run: |
           dotnet tool install --tool-path ./tools dotnet-reportgenerator-globaltool
-          chmod +x ./tools/reportgenerator || true
+          chmod +x ./tools/reportgenerator
 
       - name: Run Cake
         run: dotnet-cake build.cake
@@ -58,7 +58,7 @@ jobs:
           fi
 
       - name: Comment on PR
-        if: always() && github.event_name == 'pull_request'
+        if: always() && github.event_name == 'pull_request' && hashFiles('CoverageReport/SummaryGithub.md') != ''
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           recreate: true

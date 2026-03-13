@@ -19,4 +19,6 @@ global using MVFC.LongPolling.Playground.Api.Responses;
 global using Refit;
 global using Xunit;
 global using MVFC.LongPolling.Internals;
+global using Microsoft.Extensions.Hosting;
+global using Projects;
 
