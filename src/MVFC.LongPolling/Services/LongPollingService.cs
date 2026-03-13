@@ -45,6 +45,7 @@ public sealed class LongPollingService(
 
         _logger.LogWaitingChannelAndTimeout(fullChannel, timeout.TotalSeconds);
 
+        _readySignals.GetOrAdd(fullChannel, _ => new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously));
         var channelLock = await AcquireChannelLockAsync(fullChannel, cancellationToken).ConfigureAwait(false);
 
         try
@@ -122,12 +123,12 @@ public sealed class LongPollingService(
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
         var tcs = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        var readyTcs = _readySignals.GetOrAdd(fullChannel, _ => new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously));
+        _readySignals.TryGetValue(fullChannel, out var readyTcs);
 
         try
         {
             await RegisterRedisSubscriberAsync(fullChannel, tcs, linkedCts).ConfigureAwait(false);
-            readyTcs.TrySetResult();
+            readyTcs?.TrySetResult();
 
             return await WaitForMessageAsync(fullChannel, timeout, tcs, linkedCts, timeoutCts, cancellationToken).ConfigureAwait(false);
         }

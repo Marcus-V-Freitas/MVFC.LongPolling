@@ -4,7 +4,7 @@ var redis = builder.Configuration.GetConnectionString("longpolling-redis")!;
 
 builder.Services.AddLongPolling(redis, cfg =>
 {
-    cfg.DefaultTimeout = TimeSpan.FromSeconds(10);
+    cfg.DefaultTimeout = TimeSpan.FromSeconds(5);
     cfg.KeyPrefix = "poll";
 });
 
