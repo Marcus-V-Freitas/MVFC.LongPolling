@@ -33,12 +33,22 @@ jobs:
       - name: Install Cake
         run: dotnet tool install --global Cake.Tool
 
+      - name: Install ReportGenerator
+        run: |
+          dotnet tool install --tool-path ./tools dotnet-reportgenerator-globaltool
+          chmod +x ./tools/reportgenerator || true
+
       - name: Run Cake
         run: dotnet-cake build.cake
 
       - name: Publish summary
         if: always()
-        run: cat CoverageReport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+        run: |
+          if [ -f CoverageReport/SummaryGithub.md ]; then
+            cat CoverageReport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Coverage summary not found, skipping."
+          fi
 
       - name: Comment on PR
         if: always() && github.event_name == 'pull_request'

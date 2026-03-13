@@ -51,7 +51,10 @@ Task("Test-Coverage")
             .Append("--collect:\"XPlat Code Coverage\"")
             .Append("--settings coverage.runsettings")
             .Append("--logger \"trx;LogFileName=test-results.trx\"")
+            .Append("--verbosity detailed")
+            .Append("--diag diag.txt")
     });
+    Information("DotNetTest finalizado (se chegou aqui). Verifique test-results.trx e diag.txt");
 
     var reports = GetFiles("./coverage/**/coverage.cobertura.xml");
     if (reports == null || reports.Count == 0)
@@ -71,8 +74,23 @@ Task("Test-Coverage")
     var reportArgs = string.Join(";", reports.Select(f => f.FullPath));
     var rgPath     = FileExists(reportGeneratorExeWin) ? reportGeneratorExeWin : reportGeneratorExe;
 
-    Information("Gerando relatório HTML...");
-    StartProcess(rgPath, $"-reports:\"{reportArgs}\" -targetdir:\"{reportDir}\" -reporttypes:\"Html;Cobertura;MarkdownSummaryGithub\" -assemblyfilters:\"+MVFC.LongPolling*\" -classfilters:\"-*.Tests.*;-*.Playground.*\"");
+    Information("ReportGenerator path: {0}", rgPath);
+    Information("ReportGenerator args: -reports:\"{0}\" -targetdir:\"{1}\" -reporttypes:\"Html;Cobertura;MarkdownSummaryGithub\" -assemblyfilters:\"+MVFC.LongPolling*\" -classfilters:\"-*.Tests.*;-*.Playground.*\"", reportArgs, reportDir);
+
+    try
+    {
+        var exitCode = StartProcess(rgPath, $"-reports:\"{reportArgs}\" -targetdir:\"{reportDir}\" -reporttypes:\"Html;Cobertura;MarkdownSummaryGithub\" -assemblyfilters:\"+MVFC.LongPolling*\" -classfilters:\"-*.Tests.*;-*.Playground.*\"");
+        if (exitCode != 0)
+        {
+            Error("ReportGenerator retornou código de saída {0}", exitCode);
+            throw new Exception($"ReportGenerator failed with exit code {exitCode}");
+        }
+    }
+    catch(Exception ex)
+    {
+        Error("Falha ao executar ReportGenerator: {0}", ex.Message);
+        throw;
+    }
     Information($"Relatório gerado em: {reportDir}");
 });
 
