@@ -9,11 +9,9 @@ public static class ServiceCollectionExtensions
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(redisConnectionString);
 
-        services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnectionString));
-        services.Configure<LongPollingConfig>(config => configure?.Invoke(config));
-        services.AddSingleton<ILongPollingService, LongPollingService>();
+        var multiplexer = ConnectionMultiplexer.Connect(redisConnectionString);
 
-        return services;
+        return services.AddLongPolling(multiplexer, configure);
     }
 
     public static IServiceCollection AddLongPolling(

@@ -1,16 +1,16 @@
-﻿namespace MVFC.LongPolling.Tests;
+namespace MVFC.LongPolling.Tests;
 
 public sealed class LongPollingServiceTests : IAsyncDisposable
 {
     private readonly IConnectionMultiplexer _redis = Substitute.For<IConnectionMultiplexer>();
-    private readonly ISubscriber _subscriber = Substitute.For<ISubscriber>();    
-    private readonly ILogger<LongPollingService> _logger = Substitute.For<ILogger<LongPollingService>>();    
+    private readonly ISubscriber _subscriber = Substitute.For<ISubscriber>();
+    private readonly ILogger<LongPollingService> _logger = Substitute.For<ILogger<LongPollingService>>();
     private readonly LongPollingConfig _config = MockEntities.CreatePollingConfig();
     private readonly IOptions<LongPollingConfig> _configOptions;
     private readonly LongPollingService _sut;
 
     public LongPollingServiceTests()
-    {        
+    {
         _configOptions = Options.Create(_config);
         _redis.GetSubscriber().Returns(_subscriber);
         _sut = new(_redis, _configOptions, _logger);
@@ -105,7 +105,7 @@ public sealed class LongPollingServiceTests : IAsyncDisposable
         result.Should().Be("mocked-payload");
         await _subscriber.Received(1).UnsubscribeAsync(RedisChannel.Literal("test:my-channel"));
     }
-    
+
     [Fact]
     public async Task WaitAsync_Typed_MessageReceived_ReturnsDeserializedPayload()
     {
@@ -135,6 +135,138 @@ public sealed class LongPollingServiceTests : IAsyncDisposable
         result.Should().NotBeNull();
         result!.OrderId.Should().Be(orderId);
         result!.Status.Should().Be(status);
+    }
+
+    [Fact]
+    public async Task DisposeAsync_FirstCall_UnsubscribesAll()
+    {
+        // Act
+        await _sut.DisposeAsync();
+
+        // Assert
+        await _subscriber.Received(1).UnsubscribeAllAsync(Arg.Any<CommandFlags>());
+    }
+
+    [Fact]
+    public async Task DisposeAsync_SecondCall_IsIdempotent()
+    {
+        // Act
+        await _sut.DisposeAsync();
+        await _sut.DisposeAsync();
+
+        // Assert — only one call
+        await _subscriber.Received(1).UnsubscribeAllAsync(Arg.Any<CommandFlags>());
+    }
+
+    [Fact]
+    public async Task DisposeAsync_WithActiveChannelLocks_DisposesEntries()
+    {
+        // Arrange — trigger WaitAsync to populate _channelLocks
+        _subscriber.SubscribeAsync(
+            Arg.Any<RedisChannel>(),
+            Arg.Any<Action<RedisChannel, RedisValue>>(),
+            Arg.Any<CommandFlags>())
+                   .Returns(Task.CompletedTask);
+
+        await _sut.WaitAsync("chan1", cancellationToken: TestContext.Current.CancellationToken);
+
+        // Act
+        await _sut.DisposeAsync();
+
+        // Assert
+        await _subscriber.Received(1).UnsubscribeAllAsync(Arg.Any<CommandFlags>());
+    }
+
+    [Fact]
+    public async Task WaitAsync_AfterDispose_ThrowsObjectDisposedException()
+    {
+        // Arrange
+        await _sut.DisposeAsync();
+
+        // Act
+        var act = () => _sut.WaitAsync("channel", cancellationToken: TestContext.Current.CancellationToken);
+
+        // Assert
+        await act.Should().ThrowAsync<ObjectDisposedException>();
+    }
+
+    [Fact]
+    public async Task PublishAsync_AfterDispose_ThrowsObjectDisposedException()
+    {
+        // Arrange
+        await _sut.DisposeAsync();
+
+        // Act
+        var act = () => _sut.PublishAsync("channel", "payload", cancellationToken: TestContext.Current.CancellationToken);
+
+        // Assert
+        await act.Should().ThrowAsync<ObjectDisposedException>();
+    }
+
+    [Fact]
+    public async Task WaitUntilReadyAsync_AfterDispose_ThrowsObjectDisposedException()
+    {
+        // Arrange
+        await _sut.DisposeAsync();
+
+        // Act
+        var act = () => _sut.WaitUntilReadyAsync("channel", cancellationToken: TestContext.Current.CancellationToken);
+
+        // Assert
+        await act.Should().ThrowAsync<ObjectDisposedException>();
+    }
+
+    [Fact]
+    public async Task WaitAsync_Typed_AfterDispose_ThrowsObjectDisposedException()
+    {
+        // Arrange
+        await _sut.DisposeAsync();
+
+        // Act
+        var act = () => _sut.WaitAsync<OrderCompletedEvent>("channel", cancellationToken: TestContext.Current.CancellationToken);
+
+        // Assert
+        await act.Should().ThrowAsync<ObjectDisposedException>();
+    }
+
+    [Fact]
+    public async Task WaitAsync_WithExplicitTimeout_UsesProvidedTimeout()
+    {
+        // Arrange
+        var explicitTimeout = TimeSpan.FromMilliseconds(200);
+        var options = new LongPollingOptions(Timeout: explicitTimeout);
+
+        _subscriber.SubscribeAsync(
+            Arg.Any<RedisChannel>(),
+            Arg.Any<Action<RedisChannel, RedisValue>>(),
+            Arg.Any<CommandFlags>())
+                   .Returns(Task.CompletedTask);
+
+        // Act — should timeout after 200ms (not the default 500ms from config)
+        var result = await _sut.WaitAsync("my-channel", options, cancellationToken: TestContext.Current.CancellationToken);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task WaitAsync_WithExplicitKeyPrefix_UsesProvidedPrefix()
+    {
+        // Arrange
+        var options = new LongPollingOptions(KeyPrefix: "custom");
+
+        _subscriber.SubscribeAsync(
+            Arg.Is<RedisChannel>(c => c == "custom:my-channel"),
+            Arg.Any<Action<RedisChannel, RedisValue>>(),
+            Arg.Any<CommandFlags>())
+                   .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _sut.WaitAsync("my-channel", options, cancellationToken: TestContext.Current.CancellationToken);
+
+        // Assert
+        result.Should().BeNull();
+        await _subscriber.Received(1).UnsubscribeAsync(RedisChannel.Literal("custom:my-channel"));
     }
 
     public async ValueTask DisposeAsync() =>

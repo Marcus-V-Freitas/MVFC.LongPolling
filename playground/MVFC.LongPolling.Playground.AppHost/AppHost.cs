@@ -9,4 +9,4 @@ var api = builder.AddProject<Projects.MVFC_LongPolling_Playground_Api>("api")
 
 api.WithEnvironment("PaymentApi__BaseUrl", api.GetEndpoint("http"));
 
-await builder.Build().RunAsync();
+await builder.Build().RunAsync().ConfigureAwait(false);

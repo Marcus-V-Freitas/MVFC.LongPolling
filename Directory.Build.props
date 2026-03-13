@@ -1,19 +1,26 @@
-<Project>
+﻿<Project>
   <PropertyGroup>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AnalysisLevel>latest-recommended</AnalysisLevel>
-    <AnalysisMode>Recommended</AnalysisMode>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <LangVersion>13.0</LangVersion>
+	<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
-    <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="SonarAnalyzer.CSharp" />
   </ItemGroup>
+
+  <PropertyGroup Condition="'$(IsTestProject)' != 'true'">
+    <Authors>Marcus V. Freitas</Authors>
+    <Company>MVFC</Company>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/Marcus-V-Freitas/MVFC.LongPolling</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Marcus-V-Freitas/MVFC.LongPolling</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
 </Project>

@@ -4,6 +4,8 @@ global using NSubstitute;
 global using StackExchange.Redis;
 global using MVFC.LongPolling.Config;
 global using MVFC.LongPolling.Services;
+global using MVFC.LongPolling.Extensions;
+global using Microsoft.Extensions.DependencyInjection;
 global using Aspire.Hosting;
 global using Aspire.Hosting.Testing;
 global using System.Net;
@@ -16,3 +18,5 @@ global using MVFC.LongPolling.Playground.Api.Requests;
 global using MVFC.LongPolling.Playground.Api.Responses;
 global using Refit;
 global using Xunit;
+global using MVFC.LongPolling.Internals;
+

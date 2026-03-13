@@ -3,7 +3,7 @@
 public sealed class LongPollingService(
     IConnectionMultiplexer redis,
     IOptions<LongPollingConfig> config,
-    ILogger<LongPollingService> logger) : ILongPollingService, IAsyncDisposable, IDisposable
+    ILogger<LongPollingService> logger) : ILongPollingService, IAsyncDisposable
 {
     private int _disposed;
 
@@ -160,11 +160,11 @@ public sealed class LongPollingService(
     }
 
     private async Task<string?> WaitForMessageAsync(
-        string fullChannel, 
-        TimeSpan timeout, 
-        TaskCompletionSource<string?> tcs, 
-        CancellationTokenSource linkedCts, 
-        CancellationTokenSource timeoutCts, 
+        string fullChannel,
+        TimeSpan timeout,
+        TaskCompletionSource<string?> tcs,
+        CancellationTokenSource linkedCts,
+        CancellationTokenSource timeoutCts,
         CancellationToken cancellationToken)
     {
         await using var registration = linkedCts.Token.Register(() => tcs.TrySetCanceled(linkedCts.Token)).ConfigureAwait(false);
@@ -214,20 +214,6 @@ public sealed class LongPollingService(
             return;
 
         await _subscriber.UnsubscribeAllAsync().ConfigureAwait(false);
-
-        foreach (var (_, entry) in _channelLocks)
-            entry.Dispose();
-
-        _channelLocks.Clear();
-        _readySignals.Clear();
-    }
-
-    public void Dispose()
-    {
-        if (Interlocked.Exchange(ref _disposed, 1) == 1)
-            return;
-
-        _subscriber.UnsubscribeAll();
 
         foreach (var (_, entry) in _channelLocks)
             entry.Dispose();

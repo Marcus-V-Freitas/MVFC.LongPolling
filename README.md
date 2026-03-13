@@ -1,30 +1,45 @@
-# MVFC.LongPolling
+﻿# MVFC.LongPolling
 
-Uma biblioteca leve e eficiente de **long polling via Redis Pub/Sub** para .NET,
-com suporte a `CancellationToken` configurável e payload tipado.
+> 🇧🇷 [Leia em Português](README.pt-BR.md)
 
-## Objetivo
+[![CI](https://github.com/Marcus-V-Freitas/MVFC.LongPolling/actions/workflows/ci.yml/badge.svg)](https://github.com/Marcus-V-Freitas/MVFC.LongPolling/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/Marcus-V-Freitas/MVFC.LongPolling/branch/main/graph/badge.svg)](https://codecov.io/gh/Marcus-V-Freitas/MVFC.LongPolling)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+![Platform](https://img.shields.io/badge/.NET-9%20%7C%2010-blue)
 
-Permitir que clientes HTTP aguardem resultados assíncronos (jobs, webhooks,
-processamentos) de forma simples, sem polling cego ou WebSockets, usando o
-canal Pub/Sub do Redis como mecanismo de notificação.
+A lightweight and efficient **long polling via Redis Pub/Sub** library for .NET,
+with configurable `CancellationToken` support and typed payload.
 
----
+## Objective
 
-## Funcionalidades
-
-- **Redis Pub/Sub**: Subscription real por canal, sem polling de chave.
-- **Timeout configurável**: Tempo máximo de espera global ou por chamada via `LongPollingOptions`.
-- **CancellationToken**: Respeita desconexão do cliente HTTP automaticamente.
-- **Payload tipado**: `WaitAsync<T>` desserializa o resultado diretamente via `System.Text.Json`.
-- **Entrega confirmada**: `PublishAsync` retorna `false` se nenhum subscriber estava ativo.
-- **Sincronização determinística**: `WaitUntilReadyAsync` garante que a subscription está ativa antes de publicar.
-- **Configuração Fluente**: Setup simples no `Program.cs`.
-- **Prefixo de canal**: Isolamento de ambientes via `KeyPrefix`.
+Allow HTTP clients to await asynchronous results (jobs, webhooks,
+processing) in a simple way, without blind polling or WebSockets, using the
+Redis Pub/Sub channel as the notification mechanism.
 
 ---
 
-## Instalação
+## Features
+
+- **Redis Pub/Sub**: Real subscription per channel, no key polling.
+- **Configurable timeout**: Maximum wait time globally or per call via `LongPollingOptions`.
+- **CancellationToken**: Automatically respects HTTP client disconnection.
+- **Typed payload**: `WaitAsync<T>` deserializes the result directly via `System.Text.Json`.
+- **Confirmed delivery**: `PublishAsync` returns `false` if no subscriber was active.
+- **Deterministic synchronization**: `WaitUntilReadyAsync` guarantees the subscription is active before publishing.
+- **Fluent configuration**: Simple setup in `Program.cs`.
+- **Channel prefix**: Environment isolation via `KeyPrefix`.
+
+---
+
+## Packages
+
+| Package | Downloads |
+|---|---|
+| [MVFC.LongPolling](src/MVFC.LongPolling/README.md) | ![Downloads](https://img.shields.io/nuget/dt/MVFC.LongPolling) |
+
+***
+
+## Installation
 
 ```bash
 dotnet add package MVFC.LongPolling
@@ -32,9 +47,9 @@ dotnet add package MVFC.LongPolling
 
 ---
 
-## Configuração
+## Configuration
 
-### Básica
+### Basic
 
 ```csharp
 builder.Services.AddLongPolling("localhost:6379", cfg =>
@@ -44,7 +59,7 @@ builder.Services.AddLongPolling("localhost:6379", cfg =>
 });
 ```
 
-### Com `IConnectionMultiplexer` existente
+### With existing `IConnectionMultiplexer`
 
 ```csharp
 builder.Services.AddLongPolling(existingMultiplexer, cfg =>
@@ -55,9 +70,9 @@ builder.Services.AddLongPolling(existingMultiplexer, cfg =>
 
 ---
 
-## Uso
+## Usage
 
-### Aguardar resultado (string)
+### Await result (string)
 
 ```csharp
 app.MapGet("/poll/{jobId}", async (
@@ -68,12 +83,12 @@ app.MapGet("/poll/{jobId}", async (
     var result = await polling.WaitAsync(jobId, cancellationToken: ct);
 
     return result is null
-        ? Results.NoContent()       // timeout
+        ? Results.NoContent()
         : Results.Ok(result);
 });
 ```
 
-### Aguardar resultado tipado
+### Await typed result
 
 ```csharp
 app.MapGet("/poll/{jobId}/typed", async (
@@ -89,7 +104,7 @@ app.MapGet("/poll/{jobId}/typed", async (
 });
 ```
 
-### Notificar conclusão de job
+### Notify job completion
 
 ```csharp
 app.MapPost("/notify/{jobId}", async (
@@ -101,11 +116,11 @@ app.MapPost("/notify/{jobId}", async (
 
     return delivered
         ? Results.Accepted()
-        : Results.NotFound($"Nenhum subscriber ativo para o canal '{jobId}'.");
+        : Results.NotFound($"No active subscriber for channel '{jobId}'.");
 });
 ```
 
-### Opções por chamada
+### Per-call options
 
 ```csharp
 var options = new LongPollingOptions(
@@ -117,100 +132,107 @@ var result = await polling.WaitAsync(jobId, options, cancellationToken: ct);
 
 ---
 
-## Parâmetros de Configuração
+## Configuration Parameters
 
-| Parâmetro        | Tipo       | Padrão        | Descrição                            |
-|:-----------------|:-----------|:--------------|:-------------------------------------|
-| `DefaultTimeout` | `TimeSpan` | `30 segundos` | Tempo máximo de espera por mensagem  |
-| `KeyPrefix`      | `string`   | `longpolling` | Prefixo do canal Redis               |
+| Parameter        | Type       | Default       | Description                      |
+|:-----------------|:-----------|:--------------|:---------------------------------|
+| `DefaultTimeout` | `TimeSpan` | `30 seconds`  | Maximum wait time per message    |
+| `KeyPrefix`      | `string`   | `longpolling` | Redis channel prefix             |
 
 ---
 
-## Fluxo de funcionamento
+## How It Works
 
 ```
-Cliente HTTP          Servidor                     Redis
-────────────          ────────                     ─────
+HTTP Client           Server                       Redis
+───────────           ──────                       ─────
 GET /poll/{id} ──►   WaitAsync()
-                      SubscribeAsync(canal) ──►   SUBSCRIBE poll:id
-                      WaitUntilReadyAsync() ◄──   (confirmado)
-                                            ◄──   Worker: PublishAsync()
-                      mensagem recebida     ◄──   PUBLISH poll:id payload
-GET retorna    ◄──   Results.Ok(payload)
+                      SubscribeAsync(channel) ──►  SUBSCRIBE poll:id
+                      WaitUntilReadyAsync()   ◄──  (confirmed)
+                                              ◄──  Worker: PublishAsync()
+                      message received        ◄──  PUBLISH poll:id payload
+GET returns    ◄──   Results.Ok(payload)
 ```
 
-## Exemplo de Fluxo de funcionamento de cenário em produção para pagamento
+## Production Flow Example — Payment Scenario
 
-### Fluxo padrão — mensagem recebida
+### Default flow — message received
 
 ```
-Cliente HTTP       API Pedidos            API Pagamentos
-────────────       ───────────            ──────────────
-POST /orders ──►  Cria pedido
-                   WaitAsync(orderId) ──► Processa pagamento
+HTTP Client        Orders API             Payments API
+───────────        ──────────             ────────────
+POST /orders ──►  Creates order
+                   WaitAsync(orderId) ──► Processes payment
                                           PublishAsync(orderId, "approved")
                    ◄── "approved"
 200 OK       ◄──  Results.Ok(status)
 ```
 
-### Timeout — sem resposta do pagamento
+### Timeout — no payment response
 
 ```
-Cliente HTTP       API Pedidos            API Pagamentos
-────────────       ───────────            ──────────────
-POST /orders ──►  Cria pedido
-                   WaitAsync(orderId) ──► Processa pagamento
-                   (aguarda...)           (sem PublishAsync)
-                   timeout atingido
+HTTP Client        Orders API             Payments API
+───────────        ──────────             ────────────
+POST /orders ──►  Creates order
+                   WaitAsync(orderId) ──► Processes payment
+                   (waiting...)           (no PublishAsync)
+                   timeout reached
 504 GW Timeout ◄── Results.StatusCode(504)
 ```
 
-### Pagamento recusado
+### Payment declined
 
 ```
-Cliente HTTP       API Pedidos            API Pagamentos
-────────────       ───────────            ──────────────
-POST /orders ──►  Cria pedido
-                   WaitAsync(orderId) ──► Processa pagamento
+HTTP Client        Orders API             Payments API
+───────────        ──────────             ────────────
+POST /orders ──►  Creates order
+                   WaitAsync(orderId) ──► Processes payment
                                           PublishAsync(orderId, "rejected")
                    ◄── "rejected"
 422 Unprocessable ◄── Results.UnprocessableEntity(status)
 ```
 
-### Cliente desconecta antes da resposta
+### Client disconnects before response
 
 ```
-Cliente HTTP       API Pedidos            API Pagamentos
-────────────       ───────────            ──────────────
-POST /orders ──►  Cria pedido
-                   WaitAsync(orderId) ──► Processa pagamento
-✗ desconecta
-                   CancellationToken cancelado
-                   WaitAsync lança OperationCanceledException
-                   (resposta descartada)
+HTTP Client        Orders API             Payments API
+───────────        ──────────             ────────────
+POST /orders ──►  Creates order
+                   WaitAsync(orderId) ──► Processes payment
+✗ disconnects
+                   CancellationToken cancelled
+                   WaitAsync throws OperationCanceledException
+                   (response discarded)
 ```
 
-### Publish sem subscriber ativo
+### Publish with no active subscriber
 
 ```
-Cliente HTTP       API Pedidos            API Pagamentos
-────────────       ───────────            ──────────────
+HTTP Client        Orders API             Payments API
+───────────        ──────────             ────────────
                                           PublishAsync(orderId, "approved")
                                           delivered = false
-                   (nenhum WaitAsync ativo para orderId)
+                   (no active WaitAsync for orderId)
 404 Not Found  ◄── Results.NotFound(...)
 ```
 
 ---
 
-## Estrutura do Projeto
+## Project Structure
 
-- **[src](src/)**: Código-fonte da biblioteca `MVFC.LongPolling`.
-- **[playground](playground/)**: API de exemplo para validar o comportamento com Aspire.
-- **[tests](tests/)**: Testes de integração com Aspire + Redis.
+- **[src](src/)**: Source code for the `MVFC.LongPolling` library.
+- **[playground](playground/)**: Sample API to validate behavior with Aspire.
+- **[tests](tests/)**: Integration tests with Aspire + Redis.
 
 ---
 
-## Licença
+## Requirements
+.NET 9.0+
 
-Apache License 2.0. Consulte o arquivo [LICENSE](LICENSE).
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+[Apache-2.0](LICENSE)

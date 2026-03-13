@@ -1,4 +1,4 @@
-Task("Default")
+﻿Task("Default")
     .IsDependentOn("Test-Coverage")
     .Does(() =>
 {
@@ -9,7 +9,7 @@ Task("Clean")
     .Does(() =>
 {
     Information("Limpando pastas de resultados e relatórios...");
-    CleanDirectory("./TestResults");
+    CleanDirectory("./coverage");
     CleanDirectory("./CoverageReport");
 });
 
@@ -17,54 +17,62 @@ Task("Restore")
     .IsDependentOn("Clean")
     .Does(() =>
 {
-    Information("Restaurando pacotes dotnet...");
-    StartProcess("dotnet", "restore");
+    Information("Restaurando pacotes...");
+    DotNetRestore("MVFC.LongPolling.slnx");
 });
 
 Task("Build")
     .IsDependentOn("Restore")
     .Does(() =>
 {
-    Information("Build do solution (Release)...");
-    StartProcess("dotnet", "build --configuration Release");
+    Information("Build Release...");
+    DotNetBuild("MVFC.LongPolling.slnx", new DotNetBuildSettings
+    {
+        Configuration = "Release",
+        NoRestore = true
+    });
 });
 
 Task("Test-Coverage")
     .IsDependentOn("Build")
     .Does(() =>
 {
-    var solution = "./MVFC.LongPolling.slnx";
-    var resultsDir = "./TestResults";
-    var reportDir = "./CoverageReport";
+    var testProject = "./tests/MVFC.LongPolling.Tests/MVFC.LongPolling.Tests.csproj";
+    var resultsDir  = "./coverage";
+    var reportDir   = "./CoverageReport";
 
-    Information("Executando testes e coletando cobertura (coverlet.collector)...");
-    StartProcess("dotnet", $"test \"{solution}\" --configuration Release --no-build --collect:\"XPlat Code Coverage\" --results-directory \"{resultsDir}\"");
+    Information("Executando testes com cobertura...");
+    DotNetTest(testProject, new DotNetTestSettings
+    {
+        Configuration = "Release",
+        NoBuild = true,
+        ResultsDirectory = resultsDir,
+        ArgumentCustomization = args => args
+            .Append("--collect:\"XPlat Code Coverage\"")
+            .Append("--settings coverage.runsettings")
+            .Append("--logger \"trx;LogFileName=test-results.trx\"")
+    });
 
-    var reports = GetFiles("./TestResults/**/coverage.cobertura.xml");
+    var reports = GetFiles("./coverage/**/coverage.cobertura.xml");
     if (reports == null || reports.Count == 0)
     {
-        Warning("Nenhum arquivo de cobertura encontrado em './TestResults'.");
+        Warning("Nenhum arquivo de cobertura encontrado.");
         return;
     }
 
-    var reportGeneratorExe = "./tools/reportgenerator";
+    var reportGeneratorExe    = "./tools/reportgenerator";
     var reportGeneratorExeWin = "./tools/reportgenerator.exe";
     if (!FileExists(reportGeneratorExe) && !FileExists(reportGeneratorExeWin))
     {
-        Information("Instalando dotnet-reportgenerator-globaltool em ./tools...");
+        Information("Instalando ReportGenerator em ./tools...");
         StartProcess("dotnet", "tool install --tool-path ./tools dotnet-reportgenerator-globaltool");
     }
 
-    var reportArgs = string.Empty;
-    foreach (var f in reports)
-    {
-        reportArgs = string.IsNullOrEmpty(reportArgs)
-            ? f.FullPath
-            : reportArgs + ";" + f.FullPath;
-    }
+    var reportArgs = string.Join(";", reports.Select(f => f.FullPath));
+    var rgPath     = FileExists(reportGeneratorExeWin) ? reportGeneratorExeWin : reportGeneratorExe;
 
-    var rgPath = FileExists(reportGeneratorExeWin) ? reportGeneratorExeWin : reportGeneratorExe;
-    StartProcess(rgPath, $"-reports:\"{reportArgs}\" -targetdir:\"{reportDir}\" -reporttypes:HtmlInline_AzurePipelines");
+    Information("Gerando relatório HTML...");
+    StartProcess(rgPath, $"-reports:\"{reportArgs}\" -targetdir:\"{reportDir}\" -reporttypes:\"Html;Cobertura;MarkdownSummaryGithub\" -assemblyfilters:\"+MVFC.LongPolling*\" -classfilters:\"-*.Tests.*;-*.Playground.*\"");
     Information($"Relatório gerado em: {reportDir}");
 });
 
