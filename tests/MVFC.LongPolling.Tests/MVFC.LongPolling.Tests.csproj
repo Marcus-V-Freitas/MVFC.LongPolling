@@ -14,6 +14,11 @@
 		<PackageReference Include="xunit.runner.visualstudio" />
 	</ItemGroup>
 	<ItemGroup>
+		<Content Include="xunit.runner.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+	<ItemGroup>
 		<ProjectReference Include="..\..\playground\MVFC.LongPolling.Playground.Api\MVFC.LongPolling.Playground.Api.csproj" />
 		<ProjectReference Include="..\..\playground\MVFC.LongPolling.Playground.AppHost\MVFC.LongPolling.Playground.AppHost.csproj" />
 	</ItemGroup>
