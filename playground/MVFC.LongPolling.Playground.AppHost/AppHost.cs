@@ -1,7 +1,6 @@
 ﻿var builder = DistributedApplication.CreateBuilder(args);
 
-var redis = builder.AddRedis("longpolling-redis")
-                   .WithRedisCommander();
+var redis = builder.AddRedis("longpolling-redis");
 
 var api = builder.AddProject<Projects.MVFC_LongPolling_Playground_Api>("api")
                  .WithReference(redis)

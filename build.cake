@@ -18,7 +18,7 @@ Task("Restore")
     .Does(() =>
 {
     Information("Restaurando pacotes...");
-    DotNetRestore("MVFC.LongPolling.slnx");
+    StartProcess("dotnet", "restore MVFC.LongPolling.slnx");
 });
 
 Task("Build")
@@ -26,11 +26,7 @@ Task("Build")
     .Does(() =>
 {
     Information("Build Release...");
-    DotNetBuild("MVFC.LongPolling.slnx", new DotNetBuildSettings
-    {
-        Configuration = "Release",
-        NoRestore = true
-    });
+    StartProcess("dotnet", "build MVFC.LongPolling.slnx --configuration Release --no-restore");
 });
 
 Task("Test-Coverage")
@@ -42,16 +38,7 @@ Task("Test-Coverage")
     var reportDir   = "./CoverageReport";
 
     Information("Executando testes com cobertura...");
-    DotNetTest(testProject, new DotNetTestSettings
-    {
-        Configuration = "Release",
-        NoBuild = true,
-        ResultsDirectory = resultsDir,
-        ArgumentCustomization = args => args
-            .Append("--collect:\"XPlat Code Coverage\"")
-            .Append("--settings coverage.runsettings")
-            .Append("--logger \"trx;LogFileName=test-results.trx\"")
-    });
+    StartProcess("dotnet", $"test \"{testProject}\" --configuration Release --no-build --collect:\"XPlat Code Coverage\" --results-directory \"{resultsDir}\" --settings coverage.runsettings --logger \"trx;LogFileName=test-results.trx\"");
 
     var reports = GetFiles("./coverage/**/coverage.cobertura.xml");
     if (reports == null || reports.Count == 0)

@@ -37,10 +37,7 @@ public sealed class ServiceCollectionExtensionsTests
         var customPrefix = "custom";
 
         // Act
-        _services.AddLongPolling(_redis, config =>
-        {
-            config.KeyPrefix = customPrefix;
-        });
+        _services.AddLongPolling(_redis, config => config.KeyPrefix = customPrefix);
 
         // Assert
         var provider = _services.BuildServiceProvider();
