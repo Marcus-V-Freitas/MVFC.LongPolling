@@ -15,23 +15,10 @@ jobs:
   test-and-coverage:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    services:
-      longpolling-redis:
-        image: redis:7
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup .NET 9
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
 
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
