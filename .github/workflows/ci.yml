@@ -15,14 +15,9 @@ jobs:
   test-and-coverage:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    services:
-      longpolling-redis:
-        image: redis:7
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    env:
+      ASPIRE_ALLOW_UNSECURED_TRANSPORT: "true"
+      DOTNET_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS: "true"
 
     steps:
       - name: Checkout
@@ -38,6 +33,9 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Pull Redis image
+        run: docker pull redis:7
+
       - name: Install Cake
         run: dotnet tool install --global Cake.Tool
 
@@ -46,10 +44,15 @@ jobs:
 
       - name: Publish summary
         if: always()
-        run: cat CoverageReport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+        run: |
+          if [ -f CoverageReport/SummaryGithub.md ]; then
+            cat CoverageReport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Coverage summary not found, skipping." >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Comment on PR
-        if: always() && github.event_name == 'pull_request'
+        if: always() && github.event_name == 'pull_request' && hashFiles('CoverageReport/SummaryGithub.md') != ''
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           recreate: true

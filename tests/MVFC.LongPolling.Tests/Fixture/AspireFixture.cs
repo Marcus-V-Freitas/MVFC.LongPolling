@@ -11,7 +11,8 @@ public sealed class AspireFixture : IAsyncLifetime
     {
         _appHost = new ProjectAppHost();
 
-        await _appHost.StartAsync().ConfigureAwait(false);
+        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+        await _appHost.StartAsync(cts.Token).ConfigureAwait(false);
 
         _http = _appHost.CreateHttpClient("api");
         Api = RestService.For<ILongPollingApiService>(_http, new RefitSettings
