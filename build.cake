@@ -38,7 +38,9 @@ Task("Test-Coverage")
     var reportDir   = "./CoverageReport";
 
     Information("Executando testes com cobertura...");
-    StartProcess("dotnet", $"test \"{testProject}\" --configuration Release --no-build --collect:\"XPlat Code Coverage\" --results-directory \"{resultsDir}\" --settings coverage.runsettings --logger \"trx;LogFileName=test-results.trx\"");
+    var testExitCode = StartProcess("dotnet", $"test \"{testProject}\" --configuration Release --no-build --collect:\"XPlat Code Coverage\" --results-directory \"{resultsDir}\" --settings coverage.runsettings --logger \"trx;LogFileName=test-results.trx\" --blame-hang-timeout 3m --blame-hang-dump-type mini");
+    if (testExitCode != 0)
+        throw new Exception($"dotnet test failed with exit code {testExitCode}");
 
     var reports = GetFiles("./coverage/**/coverage.cobertura.xml");
     if (reports == null || reports.Count == 0)
