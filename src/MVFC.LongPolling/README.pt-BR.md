@@ -6,6 +6,8 @@
 [![codecov](https://codecov.io/gh/Marcus-V-Freitas/MVFC.LongPolling/branch/main/graph/badge.svg)](https://codecov.io/gh/Marcus-V-Freitas/MVFC.LongPolling)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 ![Platform](https://img.shields.io/badge/.NET-9%20%7C%2010-blue)
+![NuGet Version](https://img.shields.io/nuget/v/MVFC.LongPolling)
+![NuGet Downloads](https://img.shields.io/nuget/dt/MVFC.LongPolling)
 
 Uma biblioteca leve e eficiente de **long polling via Redis Pub/Sub** para .NET,
 com suporte a `CancellationToken` configurável e payload tipado.

@@ -1,4 +1,4 @@
-﻿namespace MVFC.LongPolling.Internals;
+namespace MVFC.LongPolling.Internals;
 
 internal sealed class ChannelLockEntry : IDisposable
 {
@@ -18,8 +18,11 @@ internal sealed class ChannelLockEntry : IDisposable
     public bool Release()
     {
         _semaphore.Release();
-        return Interlocked.Decrement(ref _refCount) == 0;
+        return ReleaseRef();
     }
+
+    public bool ReleaseRef() =>
+        Interlocked.Decrement(ref _refCount) == 0;
 
     public Task WaitAsync(CancellationToken ct) =>
         _semaphore.WaitAsync(ct);

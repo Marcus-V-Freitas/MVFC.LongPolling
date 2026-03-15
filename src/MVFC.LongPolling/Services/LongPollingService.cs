@@ -1,4 +1,4 @@
-﻿namespace MVFC.LongPolling.Services;
+namespace MVFC.LongPolling.Services;
 
 public sealed class LongPollingService(
     IConnectionMultiplexer redis,
@@ -77,7 +77,9 @@ public sealed class LongPollingService(
         }
         catch
         {
-            if (entry.Release())
+            // If we are here, WaitAsync failed/cancelled, so the lock was NOT acquired.
+            // We must only decrement the reference count (ReleaseRef).
+            if (entry.ReleaseRef())
                 _channelLocks.TryRemove(new KeyValuePair<string, ChannelLockEntry>(fullChannel, entry));
             throw;
         }

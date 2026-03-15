@@ -7,7 +7,6 @@
           <Format>cobertura</Format>
           <Include>[MVFC.LongPolling*]*</Include>
           <Exclude>[*.Tests]*,[*.Playground]*,[*.AppHost]*</Exclude>
-          <ExcludeByFile>**/obj/**/*.cs</ExcludeByFile>
           <ExcludeByAttribute>ExcludeFromCodeCoverage,GeneratedCode,CompilerGenerated</ExcludeByAttribute>
           <SingleHit>false</SingleHit>
           <UseSourceLink>true</UseSourceLink>
