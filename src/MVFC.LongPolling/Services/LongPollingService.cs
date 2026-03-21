@@ -7,6 +7,9 @@ public sealed class LongPollingService(
 {
     private int _disposed;
 
+    private const int ReadySignalSpinTimeoutMs = 500;
+    private const int ReadySignalPollIntervalMs = 10;
+
     private readonly ISubscriber _subscriber = redis.GetSubscriber();
     private readonly LongPollingConfig _config = config.Value;
     private readonly ILogger<LongPollingService> _logger = logger;
@@ -93,11 +96,36 @@ public sealed class LongPollingService(
         var resolvedOptions = options ?? new LongPollingOptions();
         var fullChannel = GetFullChannelName(channel, resolvedOptions);
 
-        if (!_readySignals.TryGetValue(fullChannel, out var readyTcs))
-            return false;
+        if (_readySignals.TryGetValue(fullChannel, out var readyTcs))
+        {
+            await readyTcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+            return true;
+        }
 
-        await readyTcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
-        return true;
+        // Spin-wait briefly for the ready signal to appear. This handles the race condition
+        // where WaitUntilReadyAsync is called before WaitAsync has had time to register the
+        // channel (e.g. when the two HTTP requests arrive at the server in reverse order under load).
+        using var spinCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(ReadySignalSpinTimeoutMs));
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, spinCts.Token);
+
+        while (true)
+        {
+            try
+            {
+                await Task.Delay(ReadySignalPollIntervalMs, linkedCts.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                return false;
+            }
+
+            if (_readySignals.TryGetValue(fullChannel, out readyTcs))
+            {
+                await readyTcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+                return true;
+            }
+        }
     }
 
     public async Task<bool> PublishAsync(string channel, string payload, LongPollingOptions? options = null, CancellationToken cancellationToken = default)
