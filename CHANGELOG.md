@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.0.9] - 2026-03-21
+
+### Fixed
+
+- Resolved a race condition in `WaitUntilReadyAsync` within `LongPollingService` that was causing integration test flakiness.
+
+---
+
 ## [1.0.8] - 2026-03-21
+
 
 ### Changed
 - CI/CD workflow refinements for automated publishing and coverage reporting
@@ -93,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[1.0.9]: https://github.com/Marcus-V-Freitas/MVFC.LongPolling/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/Marcus-V-Freitas/MVFC.LongPolling/compare/v1.0.7...v1.0.8
 [1.0.7]: https://github.com/Marcus-V-Freitas/MVFC.LongPolling/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/Marcus-V-Freitas/MVFC.LongPolling/compare/v1.0.5...v1.0.6
