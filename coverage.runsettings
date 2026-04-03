@@ -8,6 +8,7 @@
           <Include>[MVFC.LongPolling*]*</Include>
           <Exclude>[*.Tests]*,[*.Playground]*,[*.AppHost]*</Exclude>
           <ExcludeByAttribute>ExcludeFromCodeCoverage,GeneratedCode,CompilerGenerated</ExcludeByAttribute>
+          <ExcludeByFile>**/tests/**/*.cs,**/playground/**/*.cs</ExcludeByFile>
           <SingleHit>false</SingleHit>
           <UseSourceLink>true</UseSourceLink>
           <IncludeTestAssembly>false</IncludeTestAssembly>

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-04-03
+
+### Added
+
+- Automated versioning with **MinVer**.
+
+### Changed
+
+- Standardized project properties and build configurations in `Directory.Build.props`.
+- Enhanced CI/CD pipeline with automated maintenance and cleanup of GitHub Releases.
+
+### Fixed
+
+- Improved build reliability through automated tag/release cleanup on pipeline failures.
+
+---
+
 ## [1.0.9] - 2026-03-21
 
 ### Fixed
@@ -102,6 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[1.1.0]: https://github.com/Marcus-V-Freitas/MVFC.LongPolling/compare/v1.0.9...v1.1.0
 [1.0.9]: https://github.com/Marcus-V-Freitas/MVFC.LongPolling/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/Marcus-V-Freitas/MVFC.LongPolling/compare/v1.0.7...v1.0.8
 [1.0.7]: https://github.com/Marcus-V-Freitas/MVFC.LongPolling/compare/v1.0.6...v1.0.7

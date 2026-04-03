@@ -485,7 +485,7 @@ public sealed class LongPollingServiceTests : IAsyncDisposable
     {
         // Arrange
         _subscriber.UnsubscribeAsync(Arg.Any<RedisChannel>(), null, Arg.Any<CommandFlags>())
-                   .Returns(Task.FromException(new Exception("Generic Redis Error")));
+                   .Returns(Task.FromException(new RedisException("Generic Redis Error")));
 
         _subscriber.SubscribeAsync(Arg.Any<RedisChannel>(), Arg.Any<Action<RedisChannel, RedisValue>>(), Arg.Any<CommandFlags>())
                    .Returns(Task.CompletedTask);
