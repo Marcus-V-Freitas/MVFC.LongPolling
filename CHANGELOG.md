@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.1] - 2026-06-25
+
+### Changed
+
+- Updated NuGet package dependencies.
+
 ## [1.1.0] - 2026-04-03
 
 ### Added
@@ -34,8 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.8] - 2026-03-21
 
-
 ### Changed
+
 - CI/CD workflow refinements for automated publishing and coverage reporting
 - Minor adjustments to Codecov configuration for status checks precision
 
@@ -119,6 +125,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[1.1.1]: https://github.com/Marcus-V-Freitas/MVFC.LongPolling/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Marcus-V-Freitas/MVFC.LongPolling/compare/v1.0.9...v1.1.0
 [1.0.9]: https://github.com/Marcus-V-Freitas/MVFC.LongPolling/compare/v1.0.8...v1.0.9
 [1.0.8]: https://github.com/Marcus-V-Freitas/MVFC.LongPolling/compare/v1.0.7...v1.0.8
