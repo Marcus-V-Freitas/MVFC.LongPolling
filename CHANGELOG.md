@@ -1,9 +1,28 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [1.1.2] - 2026-10-31
+
+### Added
+
+- Configured `Microsoft.Testing.Platform` test runner in `global.json`.
+- Enabled central package transitive pinning (`CentralPackageTransitivePinningEnabled`) in `Directory.Packages.props`.
+
+### Changed
+
+- Updated NuGet package dependencies (`StackExchange.Redis`, `Microsoft.Extensions.*`, `Aspire.*`, `xunit.v3`, `FluentAssertions`, `NSubstitute`, `coverlet.collector`, `MinVer`, etc.).
+- Replaced `SonarAnalyzer.CSharp` with `MVFC.Pack.Analyzers`.
+- Enhanced `LongPollingService` channel lock and ready signal dictionary lookups with case-insensitive string comparison (`StringComparer.OrdinalIgnoreCase`).
+- Updated Aspire AppHost SDK to 13.6.0 and enabled `AspireUseCliBundle` in Playground.
+- Standardized private constant naming conventions in `LongPollingService` and adjusted analyzer severity rule in `.editorconfig`.
+- Configured asset controls (`PrivateAssets` / `IncludeAssets`) for test runner and code coverage dependencies.
+- Simplified coverage test arguments in `build.cake`.
 
 ---
 
@@ -125,6 +144,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[1.1.2]: https://github.com/Marcus-V-Freitas/MVFC.LongPolling/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/Marcus-V-Freitas/MVFC.LongPolling/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Marcus-V-Freitas/MVFC.LongPolling/compare/v1.0.9...v1.1.0
 [1.0.9]: https://github.com/Marcus-V-Freitas/MVFC.LongPolling/compare/v1.0.8...v1.0.9

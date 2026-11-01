@@ -1,4 +1,4 @@
-namespace MVFC.LongPolling.Services;
+﻿namespace MVFC.LongPolling.Services;
 
 public sealed class LongPollingService(
     IConnectionMultiplexer redis,
@@ -7,15 +7,15 @@ public sealed class LongPollingService(
 {
     private int _disposed;
 
-    private const int ReadySignalSpinTimeoutMs = 500;
-    private const int ReadySignalPollIntervalMs = 10;
+    private const int READY_SIGNAL_SPIN_TIMEOUT_MS = 500;
+    private const int READY_SIGNAL_POLL_INTERVAL_MS = 10;
 
     private readonly ISubscriber _subscriber = redis.GetSubscriber();
     private readonly LongPollingConfig _config = config.Value;
     private readonly ILogger<LongPollingService> _logger = logger;
 
-    private readonly ConcurrentDictionary<string, ChannelLockEntry> _channelLocks = new();
-    private readonly ConcurrentDictionary<string, TaskCompletionSource> _readySignals = new();
+    private readonly ConcurrentDictionary<string, ChannelLockEntry> _channelLocks = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, TaskCompletionSource> _readySignals = new(StringComparer.OrdinalIgnoreCase);
 
     public async Task<T?> WaitAsync<T>(string channel, LongPollingOptions? options = null, JsonSerializerOptions? jsonOptions = null, CancellationToken cancellationToken = default)
     {
@@ -105,14 +105,14 @@ public sealed class LongPollingService(
         // Spin-wait briefly for the ready signal to appear. This handles the race condition
         // where WaitUntilReadyAsync is called before WaitAsync has had time to register the
         // channel (e.g. when the two HTTP requests arrive at the server in reverse order under load).
-        using var spinCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(ReadySignalSpinTimeoutMs));
+        using var spinCts = new CancellationTokenSource(TimeSpan.FromMilliseconds(READY_SIGNAL_SPIN_TIMEOUT_MS));
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, spinCts.Token);
 
         while (true)
         {
             try
             {
-                await Task.Delay(ReadySignalPollIntervalMs, linkedCts.Token).ConfigureAwait(false);
+                await Task.Delay(READY_SIGNAL_POLL_INTERVAL_MS, linkedCts.Token).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {

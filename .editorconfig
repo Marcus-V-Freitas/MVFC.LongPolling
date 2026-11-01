@@ -332,6 +332,9 @@ dotnet_naming_rule.local_functions_must_be_pascal.severity = warning
 # 11. DIAGNÓSTICOS ROSLYN — IDE (code style)
 # ──────────────────────────────────────────────────────────
 
+# Program
+dotnet_diagnostic.MA0048.severity = none
+
 # Remover usings desnecessários
 dotnet_diagnostic.IDE0005.severity = warning
 
